@@ -3,7 +3,6 @@ const cors = require("cors");
 
 const app = express();
 
-// CORS fix (VIKTIGT för Firefox)
 app.use(cors({
   origin: "*",
   methods: ["POST", "GET", "OPTIONS"],
@@ -12,12 +11,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// Test endpoint
+// health check
 app.get("/", (req, res) => {
   res.send("🟢 ScanCheck API is running");
 });
 
-// Simple detection engine
 const badWords = [
   "free money",
   "bitcoin",
@@ -25,19 +23,21 @@ const badWords = [
   "urgent action",
   "password",
   "win prize",
-  "click here now"
+  "click here now",
+  "claim reward"
 ];
 
 app.post("/scan", (req, res) => {
   const text = (req.body?.text || "").toLowerCase();
+  const url = req.body?.url || "";
 
   let risk = "safe";
   let reason = null;
 
-  for (const word of badWords) {
-    if (text.includes(word)) {
+  for (const w of badWords) {
+    if (text.includes(w)) {
       risk = "danger";
-      reason = word;
+      reason = w;
       break;
     }
   }
@@ -45,13 +45,12 @@ app.post("/scan", (req, res) => {
   res.json({
     risk,
     reason,
-    url: req.body?.url || null,
+    url,
     timestamp: Date.now()
   });
 });
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log("ScanCheck API running on port", PORT);
 });
